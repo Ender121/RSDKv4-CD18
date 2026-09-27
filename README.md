@@ -1,3 +1,6 @@
+# DISCLAIMER
+The official RSDKModding team has released a branch of the RSDKv4 Decompilation that supports CD2018. Please use that [branch](https://github.com/RSDKModding/RSDKv4-Decompilation/tree/sega-classics) instead of this repository. Thank you, this was fun.
+
 ![](header.png?raw=true)
 
 A complete decompilation of Retro Engine v4 and the menus from Sonic 1 and 2 (2013).
