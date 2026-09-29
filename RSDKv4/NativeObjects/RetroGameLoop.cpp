@@ -1,12 +1,98 @@
 #include "RetroEngine.hpp"
 
 void InitPauseMenu()
-{
+{   
+#if RETRO_USE_ORIGINAL_CODE
+    Engine.gameMode = ENGINE_INITJAVAPAUSE;
+#else
+    // well uhh what's the point of having a Java pause menu if you can't even use it in the first place
     PauseSound();
     ClearNativeObjects();
     CREATE_ENTITY(MenuBG);
     CREATE_ENTITY(PauseMenu);
+#endif
 }
+
+void showPauseScreenJava()
+{
+    //it's Java sided, i'm not even gonna bother with this
+    PrintLog("Showing the Java Pause Menu");
+}
+
+void eventPauseMenuVisible(bool paused, int state)
+{
+    if (paused){
+        //pretty much InitPauseMenu but without creating the entities
+        mixFiltersOnJekyll = false;
+        PauseSound();
+        ClearNativeObjects();
+        return;
+    }
+    if (state == JAVAPAUSEMENU_STATE_EXIT){ // == 3
+        Engine.gameMode = ENGINE_RESETGAME;
+        if ((GetGlobalVariableByName("options.gameMode"))< 2){
+            Engine.gameMode = ENGINE_ENDGAME;
+        }
+        SetGlobalVariableByName("timeAttack.result", 1000000);
+    }
+    else{
+        if (state != JAVAPAUSEMENU_STATE_RESTART){ //!= 1
+            if (state == JAVAPAUSEMENU_STATE_RESUME){
+                mixFiltersOnJekyll = true;
+                RenderRetroBuffer(0x40,0x43200000);
+                ClearNativeObjects();
+            // this means that even if the build was compiled for MOBILE,
+            // the VirtualDPad object will never return | sad ://
+                CreateNativeObject(RetroGameLoop_Create, RetroGameLoop_Main);
+                ResumeSound();
+                Engine.gameMode = ENGINE_MAINGAME;
+                return;
+            }
+        return;
+        }
+        stageMode = STAGEMODE_LOAD;
+        Engine.gameMode = ENGINE_EXITPAUSE;
+        if ((GetGlobalVariableByName("options.gameMode")) < 2){
+            SetGlobalVariableByName("player.lives", (GetGlobalVariableByName("player.lives") - 1)); //the decompiler output tempGlobalVar + -1, which is the exact thing
+        }
+        if (activeStageList == STAGELIST_REGULAR){
+            SetGlobalVariableByName("lampPostID", 0);
+            SetGlobalVariableByName("starPostID", 0);
+        }
+    ResetCurrentStageFolder();
+    }
+    CreateNativeObject(FadeScreen_Create, FadeScreen_Main);
+    return;
+}
+
+bool restartBtnUnAvailable()
+{
+    // i usually dont put global variables in c++ variables like this
+    // but uhh... you'll see later why i did this
+    int lives = GetGlobalVariableByName("player.lives");
+    int scriptGameMode = GetGlobalVariableByName("options.gameMode");
+    int attractMode = GetGlobalVariableByName("options.attractMode");
+    int vsMode = GetGlobalVariableByName("options.vsMode");
+
+    // WHO THE FUCK WROTE THIS LOGIC AGHHHHH
+    if (Engine.gameType != GAME_SONICCD || ( (activeStageList & ~STAGELIST_REGULAR) != STAGELIST_BONUS && (activeStageList != STAGELIST_REGULAR || stageListPosition < 0x51) )) 
+    {
+        int value; // temporary
+
+        if (lives >= 2)
+            value = lives - 1;
+        else
+            value = scriptGameMode - 2;
+
+        if (value >= 0 && vsMode != 1 && attractMode != 1) {
+            return activeStageList == STAGELIST_PRESENTATION
+                || scriptGameMode == 2;
+        }
+    }
+
+    return true;
+}
+
 
 void RetroGameLoop_Create(void *objPtr) { mixFiltersOnJekyll = Engine.useHighResAssets; }
 void RetroGameLoop_Main(void *objPtr)
@@ -48,20 +134,6 @@ void RetroGameLoop_Main(void *objPtr)
 
         case ENGINE_WAIT: break;
 
-        case ENGINE_VIDEOWAIT:
-            if (ProcessVideo() != 2) { // 1: video finished / skipped, 0: nothing is actually playing
-                Engine.refreshRate = videoPrevRefreshRate; // undo the throttle PlayVideoFile applied for the video's own fps
-                Engine.gameMode    = ENGINE_MAINGAME;
-            }
-#if RETRO_USING_OPENGL
-            else {
-                // Its own texture at the video's real resolution, not the small internal game-screen buffer TransferRetroBuffer/
-                // RenderRetroBuffer would downsample it into -- see DrawVideoFrameGL's comment in Video.cpp for the full picture
-                DrawVideoFrameGL();
-            }
-#endif
-            break;
-
         case ENGINE_SCRIPTERROR:
             Engine.LoadGameConfig("Data/Game/GameConfig.bin");
             InitErrorMessage();
@@ -91,17 +163,7 @@ void RetroGameLoop_Main(void *objPtr)
             }
             else {
                 RestoreNativeObjects();
-#if !RETRO_USE_ORIGINAL_CODE
-                // LoadGameConfig() pisa todas las variables globales con sus valores por
-                // defecto, incluida timeAttack.result justo antes de que RecordsScreen la
-                // lea para guardar el récord (Sonic CD). La guardamos y la reinyectamos.
-                int taResultBackup = (Engine.gameType == GAME_SONICCD) ? GetGlobalVariableByName("timeAttack.result") : 0;
-#endif
                 Engine.LoadGameConfig("Data/Game/GameConfig.bin");
-#if !RETRO_USE_ORIGINAL_CODE
-                if (Engine.gameType == GAME_SONICCD)
-                    SetGlobalVariableByName("timeAttack.result", taResultBackup);
-#endif
                 activeStageList   = 0;
                 stageListPosition = 0;
             }
@@ -129,6 +191,12 @@ void RetroGameLoop_Main(void *objPtr)
             RestoreNativeObjects();
 #endif
             break;
+        
+        case ENGINE_INITJAVAPAUSE: //new gameMode state in RSDKv6
+        eventPauseMenuVisible(true, 0);
+        showPauseScreenJava();
+        Engine.gameMode = ENGINE_INITPAUSE;
+        return;
 
 #if !RETRO_USE_ORIGINAL_CODE && RETRO_USE_NETWORKING
         case ENGINE_CONNECT2PVS: {
