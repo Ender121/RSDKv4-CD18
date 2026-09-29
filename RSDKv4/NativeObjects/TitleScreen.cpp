@@ -119,8 +119,78 @@ void TitleScreen_Create(void *objPtr)
     self->labelPtr->y    = -96.0;
     self->introTextureID = LoadTexture("Data/Game/Menu/Intro.png", TEXFMT_RGBA5551);
 
-    loadCartridgeValue(objPtr);
+    int boxTex = 0, cartTex = 0;
+    if (Engine.gameType == GAME_SONICCD) {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                boxTex          = LoadTexture("Data/Game/Models/JPBox.png", TEXFMT_RGBA5551);
+                self->introMesh = LoadMesh("Data/Game/Models/Intro.bin", self->introTextureID);
+                self->boxMesh   = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+            case REGION_US:
+                boxTex          = LoadTexture("Data/Game/Models/USBox.png", TEXFMT_RGBA5551);
+                self->introMesh = LoadMesh("Data/Game/Models/Intro.bin", self->introTextureID);
+                self->boxMesh   = LoadMesh("Data/Game/Models/USBox.bin", boxTex);
+                break;
+            case REGION_EU:
+                boxTex          = LoadTexture("Data/Game/Models/EUBox.png", TEXFMT_RGBA5551);
+                self->introMesh = LoadMesh("Data/Game/Models/Intro.bin", self->introTextureID);
+                self->boxMesh   = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+        }
+    }
+    else {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                boxTex          = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
+                self->introMesh = LoadMesh("Data/Game/Models/Intro.bin", self->introTextureID);
+                self->boxMesh   = LoadMesh("Data/Game/Models/JPBox.bin", boxTex);
+                break;
+            case REGION_US:
+                boxTex          = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
+                self->introMesh = LoadMesh("Data/Game/Models/Intro.bin", self->introTextureID);
+                self->boxMesh   = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+            case REGION_EU:
+                boxTex          = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
+                self->introMesh = LoadMesh("Data/Game/Models/Intro.bin", self->introTextureID);
+                self->boxMesh   = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+        }
+    }
 
+    if (Engine.gameType == GAME_SONICCD) {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                cartTex        = LoadTexture("Data/Game/Models/DiscJP.png", TEXFMT_RGBA5551);
+                self->cartMesh = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                break;
+            case REGION_US:
+                cartTex        = LoadTexture("Data/Game/Models/DiscUS.png", TEXFMT_RGBA5551);
+                self->cartMesh = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                break;
+            case REGION_EU:
+                cartTex        = LoadTexture("Data/Game/Models/DiscEU.png", TEXFMT_RGBA5551);
+                self->cartMesh = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                break;
+        }
+    }
+    else {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                cartTex        = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
+                self->cartMesh = LoadMesh("Data/Game/Models/JPCartridge.bin", cartTex);
+                break;
+            case REGION_US:
+                cartTex        = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
+                self->cartMesh = LoadMesh("Data/Game/Models/Cartridge.bin", cartTex);
+                break;
+            case REGION_EU:
+                cartTex        = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
+                self->cartMesh = LoadMesh("Data/Game/Models/Cartridge.bin", cartTex);
+                break;
+        }
+    }
 
     SetMeshAnimation(self->boxMesh, &self->meshAnimator, 16, 16, 0.0);
     AnimateMesh(self->boxMesh, &self->meshAnimator);
@@ -136,7 +206,7 @@ void TitleScreen_Create(void *objPtr)
     if (Engine.gameDeviceType == RETRO_MOBILE)
         LoadTexture("Data/Game/Menu/VirtualDPad.png", TEXFMT_RGBA8888);
     else
-        LoadTexture("Data/Game/Menu/Amazon.png", TEXFMT_RGBA8888);
+        LoadTexture("Data/Game/Menu/Generic.png", TEXFMT_RGBA8888);
     LoadTexture("Data/Game/Menu/PlayerSelect.png", TEXFMT_RGBA8888);
     LoadTexture("Data/Game/Menu/SegaID.png", TEXFMT_RGBA8888);
 }
@@ -285,7 +355,6 @@ void TitleScreen_Main(void *objPtr)
                     if (keyPress.start || touches > 0 || keyPress.A) {
                         if (!self->selectionDisabled) {
                             PlaySfxByName("Menu Select", false);
-                            PlaySfxByName("Select", false);
                             StopMusic(true);
                             self->labelPtr->state = TEXTLABEL_STATE_BLINK_FAST;
                             self->introRectAlpha  = 0.0;

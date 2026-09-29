@@ -83,14 +83,12 @@ void DialogPanel_Main(void *objPtr)
                         self->buttonSelected = 0;
                         self->state          = DIALOGPANEL_STATE_ACTION;
                         PlaySfxByName("Menu Select", false);
-                        PlaySfxByName("Select", false);
                         self->buttons[0]->state = PUSHBUTTON_STATE_FLASHING;
                     }
                     if (self->buttonCount == DLGTYPE_YESNO && self->buttons[1]->state == 1) {
                         self->buttonSelected = 1;
                         self->state          = DIALOGPANEL_STATE_ACTION;
                         PlaySfxByName("Menu Select", false);
-                        PlaySfxByName("Select", false);
                         self->buttons[1]->state = PUSHBUTTON_STATE_FLASHING;
                     }
                 }
@@ -123,20 +121,17 @@ void DialogPanel_Main(void *objPtr)
                 if (keyPress.start || keyPress.A) {
                     self->state = DIALOGPANEL_STATE_ACTION;
                     PlaySfxByName("Menu Select", false);
-                    PlaySfxByName("Select", false);
                     self->buttons[self->buttonSelected]->state = 2;
                 }
             }
             else {
                 if (keyPress.left) {
                     PlaySfxByName("Menu Move", false);
-                    PlaySfxByName("MenuButton", false);
                     if (--self->buttonSelected < 0)
                         self->buttonSelected = 1;
                 }
                 if (keyPress.right) {
                     PlaySfxByName("Menu Move", false);
-                    PlaySfxByName("MenuButton", false);
                     if (++self->buttonSelected > 1)
                         self->buttonSelected = 0;
                 }
@@ -147,7 +142,6 @@ void DialogPanel_Main(void *objPtr)
                 if (keyPress.start || keyPress.A) {
                     self->state = DIALOGPANEL_STATE_ACTION;
                     PlaySfxByName("Menu Select", false);
-                    PlaySfxByName("Select", false);
                     self->buttons[self->buttonSelected]->state = 2;
                 }
             }

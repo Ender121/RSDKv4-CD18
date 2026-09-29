@@ -26,6 +26,11 @@ void SettingsScreen_Create(void *objPtr)
     if (Engine.gameType == GAME_SONIC1) {
         SetStringToFont(self->spindashText, strSpindash, FONT_LABEL);
     }
+#if !RETRO_USE_ORIGINAL_CODE
+    else if (Engine.gameType == GAME_SONICCD) {
+        SetStringToFont8(self->spindashText, "SOUNDTRACK", FONT_LABEL);
+    }
+#endif
     SetStringToFont(self->boxArtText, strBoxArt, FONT_LABEL);
     for (int i = 0; i < 4; ++i) {
         button                  = CREATE_ENTITY(PushButton);
@@ -48,8 +53,17 @@ void SettingsScreen_Create(void *objPtr)
     button->scale                          = 0.175;
     button->useRenderMatrix                = true;
     button->bgColorSelected                = 0x00C060;
-    button->bgColor                        = saveRAM[SAVE_SPINDASH] ? 0x00A048 : 0x006020;
-    SetStringToFont(self->buttons[SETTINGSSCREEN_BTN_SDON]->text, strOn, FONT_LABEL);
+#if !RETRO_USE_ORIGINAL_CODE
+    if (Engine.gameType == GAME_SONICCD) {
+        button->bgColor = saveGame->soundtrackJP ? 0x00A048 : 0x006020;
+        SetStringToFont8(self->buttons[SETTINGSSCREEN_BTN_SDON]->text, "JP", FONT_LABEL);
+    }
+    else
+#endif
+    {
+        button->bgColor = saveGame->spindashEnabled ? 0x00A048 : 0x006020;
+        SetStringToFont(self->buttons[SETTINGSSCREEN_BTN_SDON]->text, strOn, FONT_LABEL);
+    }
 
     button                                  = CREATE_ENTITY(PushButton);
     self->buttons[SETTINGSSCREEN_BTN_SDOFF] = button;
@@ -59,9 +73,22 @@ void SettingsScreen_Create(void *objPtr)
     button->scale                           = 0.175;
     button->useRenderMatrix                 = true;
     button->bgColorSelected                 = 0x00A048;
-    button->bgColor                         = !saveRAM[SAVE_SPINDASH] ? 0x00A048 : 0x006020;
-    SetStringToFont(self->buttons[SETTINGSSCREEN_BTN_SDOFF]->text, strOff, FONT_LABEL);
-    if (Engine.gameType != GAME_SONIC1) {
+#if !RETRO_USE_ORIGINAL_CODE
+    if (Engine.gameType == GAME_SONICCD) {
+        button->bgColor = !saveGame->soundtrackJP ? 0x00A048 : 0x006020;
+        SetStringToFont8(self->buttons[SETTINGSSCREEN_BTN_SDOFF]->text, "US", FONT_LABEL);
+    }
+    else
+#endif
+    {
+        button->bgColor = !saveGame->spindashEnabled ? 0x00A048 : 0x006020;
+        SetStringToFont(self->buttons[SETTINGSSCREEN_BTN_SDOFF]->text, strOff, FONT_LABEL);
+    }
+    if (Engine.gameType != GAME_SONIC1
+#if !RETRO_USE_ORIGINAL_CODE
+        && Engine.gameType != GAME_SONICCD
+#endif
+    ) {
         self->buttons[SETTINGSSCREEN_BTN_SDON]->alpha  = 0;
         self->buttons[SETTINGSSCREEN_BTN_SDOFF]->alpha = 0;
     }
@@ -74,7 +101,7 @@ void SettingsScreen_Create(void *objPtr)
     button->scale                        = 0.175;
     button->useRenderMatrix              = true;
     button->bgColorSelected              = 0x00A048;
-    button->bgColor                      = saveRAM[SAVE_BOXREGION] == REGION_JP ? 0x00A048 : 0x006020;
+    button->bgColor                      = saveGame->boxRegion == REGION_JP ? 0x00A048 : 0x006020;
     SetStringToFont8(self->buttons[SETTINGSSCREEN_BTN_JP]->text, "JP", FONT_LABEL);
 
     button                               = CREATE_ENTITY(PushButton);
@@ -85,7 +112,7 @@ void SettingsScreen_Create(void *objPtr)
     button->scale                        = 0.175;
     button->useRenderMatrix              = true;
     button->bgColorSelected              = 0x00C060;
-    button->bgColor                      = saveRAM[SAVE_BOXREGION] == REGION_US ? 0x00A048 : 0x006020;
+    button->bgColor                      = saveGame->boxRegion == REGION_US ? 0x00A048 : 0x006020;
     SetStringToFont8(self->buttons[SETTINGSSCREEN_BTN_US]->text, "US", FONT_LABEL);
 
     button                               = CREATE_ENTITY(PushButton);
@@ -96,7 +123,7 @@ void SettingsScreen_Create(void *objPtr)
     button->scale                        = 0.175;
     button->useRenderMatrix              = true;
     button->bgColorSelected              = 0x00A048;
-    button->bgColor                      = saveRAM[SAVE_BOXREGION] == REGION_EU ? 0x00A048 : 0x006020;
+    button->bgColor                      = saveGame->boxRegion == REGION_EU ? 0x00A048 : 0x006020;
     SetStringToFont8(self->buttons[SETTINGSSCREEN_BTN_EU]->text, "EU", FONT_LABEL);
 
     button                                  = CREATE_ENTITY(PushButton);
@@ -174,7 +201,7 @@ void SettingsScreen_Main(void *objPtr)
                     if (keyPress.up) {
                         PlaySfxByName("Menu Move", false);
                         self->selected--;
-                        if ((Engine.gameType != GAME_SONIC1 || self->isPauseMenu) && self->selected == SETTINGSSCREEN_SEL_SPINDASH)
+                        if ((Engine.gameType != GAME_SONIC1 && Engine.gameType != GAME_SONICCD || self->isPauseMenu) && self->selected == SETTINGSSCREEN_SEL_SPINDASH)
                             self->selected = SETTINGSSCREEN_SEL_SFXVOL;
                         if (self->selected <= SETTINGSSCREEN_SEL_NONE)
                             self->selected = SETTINGSSCREEN_SEL_CONTROLS;
@@ -182,7 +209,7 @@ void SettingsScreen_Main(void *objPtr)
                     if (keyPress.down) {
                         PlaySfxByName("Menu Move", false);
                         self->selected++;
-                        if ((Engine.gameType != GAME_SONIC1 || self->isPauseMenu) && self->selected == SETTINGSSCREEN_SEL_SPINDASH)
+                        if ((Engine.gameType != GAME_SONIC1 && Engine.gameType != GAME_SONICCD || self->isPauseMenu) && self->selected == SETTINGSSCREEN_SEL_SPINDASH)
                             self->selected = SETTINGSSCREEN_SEL_REGION;
                         if (self->selected > SETTINGSSCREEN_SEL_CONTROLS)
                             self->selected = SETTINGSSCREEN_SEL_MUSVOL;
@@ -195,22 +222,22 @@ void SettingsScreen_Main(void *objPtr)
                             self->buttons[SETTINGSSCREEN_BTN_MUSDOWN]->state = keyDown.right == true;
                             if (keyPress.left) {
                                 PlaySfxByName("Menu Move", false);
-                                if (saveRAM[SAVE_MUSVOL] > 0)
-                                    saveRAM[SAVE_MUSVOL] -= (MAX_VOLUME / 5);
-                                SetGameVolumes(saveRAM[SAVE_MUSVOL], saveRAM[SAVE_SFXVOL]);
-                                if (!saveRAM[SAVE_MUSVOL])
+                                if (saveGame->musVolume > 0)
+                                    saveGame->musVolume -= (MAX_VOLUME / 5);
+                                SetGameVolumes(saveGame->musVolume, saveGame->sfxVolume);
+                                if (!saveGame->musVolume)
                                     musicEnabled = false;
                             }
                             else if (keyPress.right) {
                                 PlaySfxByName("Menu Move", false);
-                                if (saveRAM[SAVE_MUSVOL] < MAX_VOLUME)
-                                    saveRAM[SAVE_MUSVOL] += (MAX_VOLUME / 5);
+                                if (saveGame->musVolume < MAX_VOLUME)
+                                    saveGame->musVolume += (MAX_VOLUME / 5);
                                 if (!musicEnabled) {
                                     musicEnabled = true;
                                     if (!self->isPauseMenu)
                                         PlayMusic(0, 0);
                                 }
-                                SetGameVolumes(saveRAM[SAVE_MUSVOL], saveRAM[SAVE_SFXVOL]);
+                                SetGameVolumes(saveGame->musVolume, saveGame->sfxVolume);
                             }
                             break;
                         case SETTINGSSCREEN_SEL_SFXVOL:
@@ -218,32 +245,38 @@ void SettingsScreen_Main(void *objPtr)
                             self->buttons[SETTINGSSCREEN_BTN_SFXDOWN]->state = keyDown.right == true;
                             if (keyPress.left) {
                                 PlaySfxByName("Menu Move", false);
-                                if (saveRAM[SAVE_SFXVOL] > 0)
-                                    saveRAM[SAVE_SFXVOL] -= (MAX_VOLUME / 5);
-                                SetGameVolumes(saveRAM[SAVE_MUSVOL], saveRAM[SAVE_SFXVOL]);
+                                if (saveGame->sfxVolume > 0)
+                                    saveGame->sfxVolume -= (MAX_VOLUME / 5);
+                                SetGameVolumes(saveGame->musVolume, saveGame->sfxVolume);
                             }
                             else if (keyPress.right) {
                                 PlaySfxByName("Menu Move", false);
-                                if (saveRAM[SAVE_SFXVOL] < MAX_VOLUME)
-                                    saveRAM[SAVE_SFXVOL] += (MAX_VOLUME / 5);
-                                SetGameVolumes(saveRAM[SAVE_MUSVOL], saveRAM[SAVE_SFXVOL]);
+                                if (saveGame->sfxVolume < MAX_VOLUME)
+                                    saveGame->sfxVolume += (MAX_VOLUME / 5);
+                                SetGameVolumes(saveGame->musVolume, saveGame->sfxVolume);
                             }
                             break;
-                        case SETTINGSSCREEN_SEL_SPINDASH:
-                            if (saveRAM[SAVE_SPINDASH])
+                        case SETTINGSSCREEN_SEL_SPINDASH: {
+#if !RETRO_USE_ORIGINAL_CODE
+                            bool isCD   = Engine.gameType == GAME_SONICCD;
+                            int &toggle = isCD ? saveGame->soundtrackJP : saveGame->spindashEnabled;
+#else
+                            int &toggle = saveGame->spindashEnabled;
+#endif
+                            if (toggle)
                                 self->buttons[SETTINGSSCREEN_BTN_SDON]->state = PUSHBUTTON_STATE_SELECTED;
                             else
                                 self->buttons[SETTINGSSCREEN_BTN_SDOFF]->state = PUSHBUTTON_STATE_SELECTED;
                             if (keyPress.left || keyPress.right) {
                                 PlaySfxByName("Menu Move", false);
-                                if (saveRAM[SAVE_SPINDASH]) {
+                                if (toggle) {
                                     self->buttons[SETTINGSSCREEN_BTN_SDON]->state            = PUSHBUTTON_STATE_UNSELECTED;
                                     self->buttons[SETTINGSSCREEN_BTN_SDOFF]->state           = PUSHBUTTON_STATE_SELECTED;
                                     self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColor          = 0x006020;
                                     self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColorSelected  = 0x00C060;
                                     self->buttons[SETTINGSSCREEN_BTN_SDOFF]->bgColor         = 0x00A048;
                                     self->buttons[SETTINGSSCREEN_BTN_SDOFF]->bgColorSelected = 0x00C060;
-                                    saveRAM[SAVE_SPINDASH]                                = false;
+                                    toggle                                                   = false;
                                 }
                                 else {
                                     self->buttons[SETTINGSSCREEN_BTN_SDON]->state            = PUSHBUTTON_STATE_SELECTED;
@@ -252,21 +285,26 @@ void SettingsScreen_Main(void *objPtr)
                                     self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColorSelected  = 0x00C060;
                                     self->buttons[SETTINGSSCREEN_BTN_SDOFF]->bgColor         = 0x006020;
                                     self->buttons[SETTINGSSCREEN_BTN_SDOFF]->bgColorSelected = 0x00C060;
-                                    saveRAM[SAVE_SPINDASH]                                = true;
+                                    toggle                                                   = true;
                                 }
+#if !RETRO_USE_ORIGINAL_CODE
+                                if (isCD)
+                                    SetGlobalVariableByName("options.soundtrack", toggle ? 0 : 1);
+#endif
                             }
                             break;
+                        }
                         case SETTINGSSCREEN_SEL_REGION:
                             if (keyPress.left || keyPress.right) {
                                 if (keyPress.left) {
                                     PlaySfxByName("Menu Move", false);
-                                    if (saveRAM[SAVE_BOXREGION] - 1 >= 0)
-                                        saveRAM[SAVE_BOXREGION]--;
+                                    if (saveGame->boxRegion - 1 >= 0)
+                                        saveGame->boxRegion--;
                                 }
                                 else {
                                     PlaySfxByName("Menu Move", false);
-                                    if (saveRAM[SAVE_BOXREGION] + 1 < 3)
-                                        saveRAM[SAVE_BOXREGION]++;
+                                    if (saveGame->boxRegion + 1 < 3)
+                                        saveGame->boxRegion++;
                                 }
 
                                 self->buttons[SETTINGSSCREEN_BTN_JP]->bgColor                               = 0x006020;
@@ -275,10 +313,10 @@ void SettingsScreen_Main(void *objPtr)
                                 self->buttons[SETTINGSSCREEN_BTN_US]->bgColorSelected                       = 0x00C060;
                                 self->buttons[SETTINGSSCREEN_BTN_EU]->bgColor                               = 0x006020;
                                 self->buttons[SETTINGSSCREEN_BTN_EU]->bgColorSelected                       = 0x00C060;
-                                self->buttons[SETTINGSSCREEN_BTN_JP + saveRAM[SAVE_BOXREGION]]->bgColor         = 0x00A048;
-                                self->buttons[SETTINGSSCREEN_BTN_JP + saveRAM[SAVE_BOXREGION]]->bgColorSelected = 0x00C060;
+                                self->buttons[SETTINGSSCREEN_BTN_JP + saveGame->boxRegion]->bgColor         = 0x00A048;
+                                self->buttons[SETTINGSSCREEN_BTN_JP + saveGame->boxRegion]->bgColorSelected = 0x00C060;
                             }
-                            self->buttons[SETTINGSSCREEN_BTN_JP + saveRAM[SAVE_BOXREGION]]->state = PUSHBUTTON_STATE_SELECTED;
+                            self->buttons[SETTINGSSCREEN_BTN_JP + saveGame->boxRegion]->state = PUSHBUTTON_STATE_SELECTED;
                             break;
                         case SETTINGSSCREEN_SEL_CONTROLS:
                             self->buttons[SETTINGSSCREEN_BTN_CTRLS]->state = PUSHBUTTON_STATE_SELECTED;
@@ -306,52 +344,59 @@ void SettingsScreen_Main(void *objPtr)
                     if (self->buttons[SETTINGSSCREEN_BTN_MUSUP]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Move", false);
                         self->buttons[SETTINGSSCREEN_BTN_MUSUP]->state = PUSHBUTTON_STATE_UNSELECTED;
-                        if (saveRAM[SAVE_MUSVOL] > 0) {
-                            saveRAM[SAVE_MUSVOL] -= (MAX_VOLUME / 5);
+                        if (saveGame->musVolume > 0) {
+                            saveGame->musVolume -= (MAX_VOLUME / 5);
                         }
-                        SetGameVolumes(saveRAM[SAVE_MUSVOL], saveRAM[SAVE_SFXVOL]);
-                        if (!saveRAM[SAVE_MUSVOL])
+                        SetGameVolumes(saveGame->musVolume, saveGame->sfxVolume);
+                        if (!saveGame->musVolume)
                             musicEnabled = false;
                     }
 
                     if (self->buttons[SETTINGSSCREEN_BTN_MUSDOWN]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Move", false);
                         self->buttons[SETTINGSSCREEN_BTN_MUSDOWN]->state = PUSHBUTTON_STATE_UNSELECTED;
-                        if (saveRAM[SAVE_MUSVOL] < MAX_VOLUME) {
-                            saveRAM[SAVE_MUSVOL] += (MAX_VOLUME / 5);
+                        if (saveGame->musVolume < MAX_VOLUME) {
+                            saveGame->musVolume += (MAX_VOLUME / 5);
                         }
                         if (!musicEnabled) {
                             musicEnabled = true;
                             PlayMusic(0, 0);
                         }
-                        SetGameVolumes(saveRAM[SAVE_MUSVOL], saveRAM[SAVE_SFXVOL]);
+                        SetGameVolumes(saveGame->musVolume, saveGame->sfxVolume);
                     }
 
                     if (self->buttons[SETTINGSSCREEN_BTN_SFXUP]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Move", false);
                         self->buttons[SETTINGSSCREEN_BTN_SFXUP]->state = PUSHBUTTON_STATE_UNSELECTED;
-                        sfxVolume                                      = saveRAM[SAVE_SFXVOL];
+                        sfxVolume                                      = saveGame->sfxVolume;
                         if (sfxVolume > 0) {
                             sfxVolume -= (MAX_VOLUME / 5);
-                            saveRAM[SAVE_SFXVOL] = sfxVolume;
+                            saveGame->sfxVolume = sfxVolume;
                         }
-                        SetGameVolumes(saveRAM[SAVE_MUSVOL], sfxVolume);
+                        SetGameVolumes(saveGame->musVolume, sfxVolume);
                     }
 
                     if (self->buttons[SETTINGSSCREEN_BTN_SFXDOWN]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Move", false);
                         self->buttons[SETTINGSSCREEN_BTN_SFXDOWN]->state = PUSHBUTTON_STATE_UNSELECTED;
-                        sfxVolume                                        = saveRAM[SAVE_SFXVOL];
+                        sfxVolume                                        = saveGame->sfxVolume;
                         if (sfxVolume < MAX_VOLUME) {
                             sfxVolume += (MAX_VOLUME / 5);
-                            saveRAM[SAVE_SFXVOL] = sfxVolume;
+                            saveGame->sfxVolume = sfxVolume;
                         }
-                        SetGameVolumes(saveRAM[SAVE_MUSVOL], sfxVolume);
+                        SetGameVolumes(saveGame->musVolume, sfxVolume);
                     }
 
                     if (self->buttons[SETTINGSSCREEN_BTN_SDON]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Move", false);
-                        saveRAM[SAVE_SPINDASH]                                = true;
+#if !RETRO_USE_ORIGINAL_CODE
+                        if (Engine.gameType == GAME_SONICCD) {
+                            saveGame->soundtrackJP = true;
+                            SetGlobalVariableByName("options.soundtrack", 0);
+                        }
+                        else
+#endif
+                            saveGame->spindashEnabled = true;
                         self->buttons[SETTINGSSCREEN_BTN_SDON]->state            = PUSHBUTTON_STATE_UNSELECTED;
                         self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColor          = 0x00A048;
                         self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColorSelected  = 0x00C060;
@@ -361,7 +406,14 @@ void SettingsScreen_Main(void *objPtr)
 
                     if (self->buttons[SETTINGSSCREEN_BTN_SDOFF]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Move", false);
-                        saveRAM[SAVE_SPINDASH]                                = false;
+#if !RETRO_USE_ORIGINAL_CODE
+                        if (Engine.gameType == GAME_SONICCD) {
+                            saveGame->soundtrackJP = false;
+                            SetGlobalVariableByName("options.soundtrack", 1);
+                        }
+                        else
+#endif
+                            saveGame->spindashEnabled = false;
                         self->buttons[SETTINGSSCREEN_BTN_SDOFF]->state           = PUSHBUTTON_STATE_UNSELECTED;
                         self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColor          = 0x006020;
                         self->buttons[SETTINGSSCREEN_BTN_SDON]->bgColorSelected  = 0x00C060;
@@ -378,7 +430,7 @@ void SettingsScreen_Main(void *objPtr)
                         self->buttons[SETTINGSSCREEN_BTN_US]->bgColorSelected = 0x00C060;
                         self->buttons[SETTINGSSCREEN_BTN_EU]->bgColor         = 0x006020;
                         self->buttons[SETTINGSSCREEN_BTN_EU]->bgColorSelected = 0x00C060;
-                        saveRAM[SAVE_BOXREGION]                                   = REGION_JP;
+                        saveGame->boxRegion                                   = REGION_JP;
                     }
 
                     if (self->buttons[SETTINGSSCREEN_BTN_US]->state == PUSHBUTTON_STATE_SELECTED) {
@@ -390,7 +442,7 @@ void SettingsScreen_Main(void *objPtr)
                         self->buttons[SETTINGSSCREEN_BTN_US]->bgColorSelected = 0x00C060;
                         self->buttons[SETTINGSSCREEN_BTN_EU]->bgColor         = 0x006020;
                         self->buttons[SETTINGSSCREEN_BTN_EU]->bgColorSelected = 0x00C060;
-                        saveRAM[SAVE_BOXREGION]                                   = REGION_US;
+                        saveGame->boxRegion                                   = REGION_US;
                     }
 
                     if (self->buttons[SETTINGSSCREEN_BTN_EU]->state == PUSHBUTTON_STATE_SELECTED) {
@@ -402,7 +454,7 @@ void SettingsScreen_Main(void *objPtr)
                         self->buttons[SETTINGSSCREEN_BTN_US]->bgColorSelected = 0x00C060;
                         self->buttons[SETTINGSSCREEN_BTN_EU]->bgColor         = 0x00A048;
                         self->buttons[SETTINGSSCREEN_BTN_EU]->bgColorSelected = 0x00C060;
-                        saveRAM[SAVE_BOXREGION]                                   = REGION_EU;
+                        saveGame->boxRegion                                   = REGION_EU;
                     }
                     if (self->buttons[SETTINGSSCREEN_BTN_CTRLS]->state == PUSHBUTTON_STATE_SELECTED) {
                         PlaySfxByName("Menu Select", false);
@@ -433,7 +485,7 @@ void SettingsScreen_Main(void *objPtr)
                         NativeEntity_PushButton *button = self->buttons[i];
 
                         if (i == 4 || i == 5) {
-                            if (!self->isPauseMenu && Engine.gameType == GAME_SONIC1)
+                            if (!self->isPauseMenu && (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD))
                                 button->state = CheckTouchRect(touchX[i], touchY[i], (button->textWidth + (button->scale * 64.0)) * 0.75, 12.0) >= 0;
                         }
                         else {
@@ -530,12 +582,12 @@ void SettingsScreen_Main(void *objPtr)
                 NativeEntity_PushButton *buttonDec = self->buttons[SETTINGSSCREEN_BTN_MUSUP];
                 if (CheckTouchRect(32.0, 54.0, ((64.0 * buttonDec->scale) + buttonDec->textWidth) * 0.75, 12.0) >= 0) {
                     buttonDec->state = PUSHBUTTON_STATE_SELECTED;
-                    if (saveRAM[SAVE_VDPADSIZE]> 0x20)
-                        saveRAM[SAVE_VDPADSIZE]-= 4;
+                    if (saveGame->vDPadSize > 0x20)
+                        saveGame->vDPadSize -= 4;
                     self->virtualDPad              = self->virtualDPad;
-                    self->virtualDPad->moveSize    = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256);
-                    self->virtualDPad->jumpSize    = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256);
-                    self->virtualDPad->pressedSize = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256) * 0.85;
+                    self->virtualDPad->moveSize    = saveGame->vDPadSize * (1.0f / 256);
+                    self->virtualDPad->jumpSize    = saveGame->vDPadSize * (1.0f / 256);
+                    self->virtualDPad->pressedSize = saveGame->vDPadSize * (1.0f / 256) * 0.85;
                 }
                 else {
                     buttonDec->state = PUSHBUTTON_STATE_UNSELECTED;
@@ -545,12 +597,12 @@ void SettingsScreen_Main(void *objPtr)
                 NativeEntity_PushButton *buttonInc = self->buttons[SETTINGSSCREEN_BTN_MUSDOWN];
                 if (CheckTouchRect(108.0, 54.0, ((64.0 * buttonInc->scale) + buttonInc->textWidth) * 0.75, 12.0) >= 0) {
                     buttonInc->state = PUSHBUTTON_STATE_SELECTED;
-                    if (saveRAM[SAVE_VDPADSIZE]< 0x80)
-                        saveRAM[SAVE_VDPADSIZE]+= 4;
+                    if (saveGame->vDPadSize < 0x80)
+                        saveGame->vDPadSize += 4;
                     self->virtualDPad              = self->virtualDPad;
-                    self->virtualDPad->moveSize    = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256);
-                    self->virtualDPad->jumpSize    = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256);
-                    self->virtualDPad->pressedSize = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256) * 0.85;
+                    self->virtualDPad->moveSize    = saveGame->vDPadSize * (1.0f / 256);
+                    self->virtualDPad->jumpSize    = saveGame->vDPadSize * (1.0f / 256);
+                    self->virtualDPad->pressedSize = saveGame->vDPadSize * (1.0f / 256) * 0.85;
                 }
                 else {
                     self->buttons[SETTINGSSCREEN_BTN_MUSDOWN]->state = PUSHBUTTON_STATE_UNSELECTED;
@@ -560,8 +612,8 @@ void SettingsScreen_Main(void *objPtr)
                 buttonDec = self->buttons[SETTINGSSCREEN_BTN_SFXUP];
                 if (CheckTouchRect(32.0, 26.0, ((64.0 * buttonDec->scale) + buttonDec->textWidth) * 0.75, 12.0) >= 0) {
                     buttonDec->state = PUSHBUTTON_STATE_SELECTED;
-                    if (saveRAM[SAVE_VDPADOPACITY] > 0) {
-                        saveRAM[SAVE_VDPADOPACITY] -= 4;
+                    if (saveGame->vDPadOpacity > 0) {
+                        saveGame->vDPadOpacity -= 4;
                     }
                 }
                 else {
@@ -572,15 +624,15 @@ void SettingsScreen_Main(void *objPtr)
                 buttonInc = self->buttons[SETTINGSSCREEN_BTN_SFXDOWN];
                 if (CheckTouchRect(108.0, 26.0, ((64.0 * buttonInc->scale) + buttonInc->textWidth) * 0.75, 12.0) >= 0) {
                     buttonInc->state = PUSHBUTTON_STATE_SELECTED;
-                    if (saveRAM[SAVE_VDPADOPACITY] < 0x100) {
-                        saveRAM[SAVE_VDPADOPACITY] += 4;
+                    if (saveGame->vDPadOpacity < 0x100) {
+                        saveGame->vDPadOpacity += 4;
                     }
                 }
                 else {
                     buttonInc->state = PUSHBUTTON_STATE_UNSELECTED;
                 }
 
-                self->virtualDPad->alpha = saveRAM[SAVE_VDPADOPACITY];
+                self->virtualDPad->alpha = saveGame->vDPadOpacity;
 
                 NativeEntity_PushButton *button = self->buttons[SETTINGSSCREEN_BTN_SDON];
                 button->state                   = CheckTouchRect(88.0, -2.0, ((64.0 * button->scale) + button->textWidth) * 0.75, 12.0) >= 0;
@@ -659,30 +711,30 @@ void SettingsScreen_Main(void *objPtr)
                     self->backPressed = false;
                     self->state       = SETTINGSSCREEN_STATE_FLIP_CTRLSTOUCH;
                     SetGlobalVariableByName("options.touchControls", false);
-                    saveRAM[SAVE_VDPADX_MOVE] = (self->virtualDPad->moveX + SCREEN_CENTERX_F);
-                    saveRAM[SAVE_VDPADY_MOVE] = -(self->virtualDPad->moveY - SCREEN_CENTERY_F);
-                    saveRAM[SAVE_VDPADX_JUMP] = self->virtualDPad->jumpX - SCREEN_CENTERX_F;
-                    saveRAM[SAVE_VDPADY_JUMP] = -(self->virtualDPad->jumpY - SCREEN_CENTERY_F);
+                    saveGame->vDPadX_Move = (self->virtualDPad->moveX + SCREEN_CENTERX_F);
+                    saveGame->vDPadY_Move = -(self->virtualDPad->moveY - SCREEN_CENTERY_F);
+                    saveGame->vDPadX_Jump = self->virtualDPad->jumpX - SCREEN_CENTERX_F;
+                    saveGame->vDPadY_Jump = -(self->virtualDPad->jumpY - SCREEN_CENTERY_F);
                 }
                 if (self->buttons[SETTINGSSCREEN_BTN_SDON]->state == PUSHBUTTON_STATE_SELECTED) {
                     self->buttons[SETTINGSSCREEN_BTN_SDON]->state = PUSHBUTTON_STATE_UNSELECTED;
                     PlaySfxByName("Event", false);
-                    saveRAM[SAVE_VDPADSIZE]           = 64;
-                    saveRAM[SAVE_VDPADX_MOVE]          = 56;
-                    saveRAM[SAVE_VDPADY_MOVE]          = 184;
-                    saveRAM[SAVE_VDPADX_JUMP]          = -56;
-                    saveRAM[SAVE_VDPADY_JUMP]          = 188;
-                    saveRAM[SAVE_VDPADOPACITY]         = 160;
+                    saveGame->vDPadSize            = 64;
+                    saveGame->vDPadX_Move          = 56;
+                    saveGame->vDPadY_Move          = 184;
+                    saveGame->vDPadX_Jump          = -56;
+                    saveGame->vDPadY_Jump          = 188;
+                    saveGame->vDPadOpacity         = 160;
                     self->virtualDPad->alpha       = 160;
-                    self->virtualDPad->moveX       = saveRAM[SAVE_VDPADX_MOVE] - SCREEN_CENTERX_F;
-                    self->virtualDPad->moveY       = -(saveRAM[SAVE_VDPADY_MOVE] - SCREEN_CENTERY_F);
-                    self->virtualDPad->jumpX       = saveRAM[SAVE_VDPADX_JUMP] + SCREEN_CENTERX_F;
-                    self->virtualDPad->jumpY       = -(saveRAM[SAVE_VDPADY_JUMP] - SCREEN_CENTERY_F);
+                    self->virtualDPad->moveX       = saveGame->vDPadX_Move - SCREEN_CENTERX_F;
+                    self->virtualDPad->moveY       = -(saveGame->vDPadY_Move - SCREEN_CENTERY_F);
+                    self->virtualDPad->jumpX       = saveGame->vDPadX_Jump + SCREEN_CENTERX_F;
+                    self->virtualDPad->jumpY       = -(saveGame->vDPadY_Jump - SCREEN_CENTERY_F);
                     self->virtualDPad->moveFinger  = -1;
                     self->virtualDPad->jumpFinger  = -1;
-                    self->virtualDPad->moveSize    = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256);
-                    self->virtualDPad->jumpSize    = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256);
-                    self->virtualDPad->pressedSize = saveRAM[SAVE_VDPADSIZE]* (1.0f / 256) * 0.85;
+                    self->virtualDPad->moveSize    = saveGame->vDPadSize * (1.0f / 256);
+                    self->virtualDPad->jumpSize    = saveGame->vDPadSize * (1.0f / 256);
+                    self->virtualDPad->pressedSize = saveGame->vDPadSize * (1.0f / 256) * 0.85;
                 }
             }
 
@@ -691,10 +743,10 @@ void SettingsScreen_Main(void *objPtr)
                 self->backPressed = false;
                 self->state       = SETTINGSSCREEN_STATE_FLIP_CTRLSTOUCH;
                 SetGlobalVariableByName("options.touchControls", false);
-                saveRAM[SAVE_VDPADX_MOVE] = (self->virtualDPad->moveX + SCREEN_CENTERX_F);
-                saveRAM[SAVE_VDPADY_MOVE] = -(self->virtualDPad->moveY - SCREEN_CENTERY_F);
-                saveRAM[SAVE_VDPADX_JUMP] = self->virtualDPad->jumpX - SCREEN_CENTERX_F;
-                saveRAM[SAVE_VDPADY_JUMP] = -(self->virtualDPad->jumpY - SCREEN_CENTERY_F);
+                saveGame->vDPadX_Move = (self->virtualDPad->moveX + SCREEN_CENTERX_F);
+                saveGame->vDPadY_Move = -(self->virtualDPad->moveY - SCREEN_CENTERY_F);
+                saveGame->vDPadX_Jump = self->virtualDPad->jumpX - SCREEN_CENTERX_F;
+                saveGame->vDPadY_Jump = -(self->virtualDPad->jumpY - SCREEN_CENTERY_F);
             }
             break;
         case SETTINGSSCREEN_STATE_EXIT: {
@@ -722,7 +774,7 @@ void SettingsScreen_Main(void *objPtr)
                 RemoveNativeObject(self->label);
                 RemoveNativeObject(self);
                 Engine.gameMode = ENGINE_MAINGAME;
-                if (saveRAM[SAVE_SPINDASH]) {
+                if (saveGame->spindashEnabled) {
                     SetGlobalVariableByName("options.originalControls", false);
                     SetGlobalVariableByName("options.airSpeedCap", false);
                 }
@@ -731,18 +783,66 @@ void SettingsScreen_Main(void *objPtr)
                     SetGlobalVariableByName("options.airSpeedCap", true);
                 }
 
-                if (Engine.globalBoxRegion != saveRAM[SAVE_BOXREGION]) {
-                    int package = 0;
-                    switch (Engine.globalBoxRegion) {
-                        case REGION_JP: package = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA8888); break;
-                        case REGION_US: package = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA8888); break;
-                        case REGION_EU: package = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA8888); break;
+                if (Engine.globalBoxRegion != saveGame->boxRegion) {
+                    int boxTex = 0, cartTex = 0;
+                    if (Engine.gameType == GAME_SONICCD) {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: boxTex = LoadTexture("Data/Game/Models/JPBox.png", TEXFMT_RGBA8888); break;
+                            case REGION_US: boxTex = LoadTexture("Data/Game/Models/USBox.png", TEXFMT_RGBA8888); break;
+                            case REGION_EU: boxTex = LoadTexture("Data/Game/Models/EUBox.png", TEXFMT_RGBA8888); break;
+                        }
                     }
-                    Engine.globalBoxRegion = saveRAM[SAVE_BOXREGION];
-                    switch (Engine.globalBoxRegion) {
-                        case REGION_JP: ReplaceTexture("Data/Game/Models/Package_JP.png", package); break;
-                        case REGION_US: ReplaceTexture("Data/Game/Models/Package_US.png", package); break;
-                        case REGION_EU: ReplaceTexture("Data/Game/Models/Package_EU.png", package); break;
+                    else {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: boxTex = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA8888); break;
+                            case REGION_US: boxTex = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA8888); break;
+                            case REGION_EU: boxTex = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA8888); break;
+                        }
+                    }
+                    if (Engine.gameType == GAME_SONICCD) {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: cartTex = LoadTexture("Data/Game/Models/DiscJP.png", TEXFMT_RGBA8888); break;
+                            case REGION_US: cartTex = LoadTexture("Data/Game/Models/DiscUS.png", TEXFMT_RGBA8888); break;
+                            case REGION_EU: cartTex = LoadTexture("Data/Game/Models/DiscEU.png", TEXFMT_RGBA8888); break;
+                        }
+                    }
+                    else {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: cartTex = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA8888); break;
+                            case REGION_US: cartTex = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA8888); break;
+                            case REGION_EU: cartTex = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA8888); break;
+                        }
+                    }
+
+                    Engine.globalBoxRegion = saveGame->boxRegion;
+
+                    if (Engine.gameType == GAME_SONICCD) {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: ReplaceTexture("Data/Game/Models/JPBox.png", boxTex); break;
+                            case REGION_US: ReplaceTexture("Data/Game/Models/USBox.png", boxTex); break;
+                            case REGION_EU: ReplaceTexture("Data/Game/Models/EUBox.png", boxTex); break;
+                        }
+                    }
+                    else {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: ReplaceTexture("Data/Game/Models/Package_JP.png", boxTex); break;
+                            case REGION_US: ReplaceTexture("Data/Game/Models/Package_US.png", boxTex); break;
+                            case REGION_EU: ReplaceTexture("Data/Game/Models/Package_EU.png", boxTex); break;
+                        }
+                    }
+                    if (Engine.gameType == GAME_SONICCD) {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: ReplaceTexture("Data/Game/Models/DiscJP.png", cartTex); break;
+                            case REGION_US: ReplaceTexture("Data/Game/Models/DiscUS.png", cartTex); break;
+                            case REGION_EU: ReplaceTexture("Data/Game/Models/DiscEU.png", cartTex); break;
+                        }
+                    }
+                    else {
+                        switch (Engine.globalBoxRegion) {
+                            case REGION_JP: ReplaceTexture("Data/Game/Models/Package_JP.png", cartTex); break;
+                            case REGION_US: ReplaceTexture("Data/Game/Models/Package_US.png", cartTex); break;
+                            case REGION_EU: ReplaceTexture("Data/Game/Models/Package_EU.png", cartTex); break;
+                        }
                     }
                 }
                 WriteSaveRAMData();
@@ -855,9 +955,9 @@ void SettingsScreen_Main(void *objPtr)
 
             SetRenderVertexColor(0xFF, 0xFF, 0xFF);
             for (int i = 0; i < 5; i++) {
-                int v = (saveRAM[SAVE_MUSVOL] <= i * 20) ? 128 : 255;
+                int v = (saveGame->musVolume <= i * 20) ? 128 : 255;
                 RenderRect(55.0 + i * 6, 56.0 + i * 4, 0.0, 4.0, 4.0 + i * 4, v, v, v, 255);
-                v = (saveRAM[SAVE_SFXVOL] <= i * 20) ? 128 : 255;
+                v = (saveGame->sfxVolume <= i * 20) ? 128 : 255;
                 RenderRect(55.0 + i * 6, 24.0 + i * 4, 0.0, 4.0, 4.0 + i * 4, v, v, v, 255);
             }
 
@@ -874,7 +974,7 @@ void SettingsScreen_Main(void *objPtr)
                 SetRenderVertexColor(0xFF, 0xFF, 0x00);
             else
                 SetRenderVertexColor(0xFF, 0xFF, 0xFF);
-            if (!self->isPauseMenu && Engine.gameType == GAME_SONIC1) {
+            if (!self->isPauseMenu && (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD)) {
                 if ((Engine.language - 1) <= 6 && ((1 << (Engine.language - 1)) & 0x43))
                     RenderText(self->spindashText, FONT_LABEL, -128.0, -6.0, 0, 0.09, 255);
                 else

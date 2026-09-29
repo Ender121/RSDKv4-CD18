@@ -1,63 +1,45 @@
 #include "RetroEngine.hpp"
 
-void loadCartridgeValue(void *objPtr)
-{
-    RSDK_THIS(StartGameButton);
-    int package = 0;
-    if (Engine.gameType == GAME_SONICCD) {
-        switch (Engine.globalBoxRegion) {
-            case REGION_JP:
-                package        = LoadTexture("Data/Game/Models/DiscJP.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", package);
-                break;
-                
-            case REGION_US:
-            //DiscJP_Transparent goes unused as you can't change the region in v6
-            //according to the original code, it loads the transparent disc texture for US and EU regions
-            //so imma just follow that logic here
-                package        = LoadTexture("Data/Game/Models/DiscJP_Transparent.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", package);
-                break;
-
-            case REGION_EU:
-                package        = LoadTexture("Data/Game/Models/DiscJP_Transparent.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", package);
-                break;
-
-            default:
-                package        = LoadTexture("Data/Game/Models/DiscJP.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", package);
-                break;
-        }
-        self->prevRegion = Engine.globalBoxRegion;
-    }
-    else{ //Sonic 1 and Sonic 2
-        switch (Engine.globalBoxRegion) {
-            case REGION_JP:
-                package        = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/JPCartridge.bin", package);
-                break;
-
-            case REGION_US:
-                package        = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/Cartridge.bin", package);
-                break;
-
-            case REGION_EU:
-                package        = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
-                self->meshCart = LoadMesh("Data/Game/Models/Cartridge.bin", package);
-                break;
-        }
-        self->prevRegion = Engine.globalBoxRegion;
-    }
-}
-
 void StartGameButton_Create(void *objPtr)
 {
     RSDK_THIS(StartGameButton);
     self->textureCircle = LoadTexture("Data/Game/Menu/Circle.png", TEXFMT_RGBA4444);
 
-    loadCartridgeValue(objPtr);
+    int cartTex = 0;
+    if (Engine.gameType == GAME_SONICCD) {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                cartTex        = LoadTexture("Data/Game/Models/DiscJP.png", TEXFMT_RGBA5551);
+                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                break;
+            case REGION_US:
+                cartTex        = LoadTexture("Data/Game/Models/DiscUS.png", TEXFMT_RGBA5551);
+                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                break;
+            case REGION_EU:
+                cartTex        = LoadTexture("Data/Game/Models/DiscEU.png", TEXFMT_RGBA5551);
+                self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                break;
+        }
+    }
+    else {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                cartTex        = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
+                self->meshCart = LoadMesh("Data/Game/Models/JPCartridge.bin", cartTex);
+                break;
+
+            case REGION_US:
+                cartTex        = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
+                self->meshCart = LoadMesh("Data/Game/Models/Cartridge.bin", cartTex);
+                break;
+
+            case REGION_EU:
+                cartTex        = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
+                self->meshCart = LoadMesh("Data/Game/Models/Cartridge.bin", cartTex);
+                break;
+        }
+    }
 
     self->prevRegion       = Engine.globalBoxRegion;
     self->x                = 0.0;
@@ -66,9 +48,6 @@ void StartGameButton_Create(void *objPtr)
     self->r                = 0xFF;
     self->g                = 0xFF;
     self->b                = 0x00;
-
-    self->alpha            = 255;
-
     self->labelPtr         = CREATE_ENTITY(TextLabel);
     self->labelPtr->fontID = FONT_HEADING;
     self->labelPtr->scale  = 0.15;
@@ -81,9 +60,40 @@ void StartGameButton_Main(void *objPtr)
 {
     RSDK_THIS(StartGameButton);
     if (self->prevRegion != Engine.globalBoxRegion) {
-
-        loadCartridgeValue(objPtr);
-
+        int cartTex = 0;
+        if (Engine.gameType == GAME_SONICCD) {
+            switch (Engine.globalBoxRegion) {
+                case REGION_JP:
+                    cartTex        = LoadTexture("Data/Game/Models/DiscJP.png", TEXFMT_RGBA5551);
+                    self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                    break;
+                case REGION_US:
+                    cartTex        = LoadTexture("Data/Game/Models/DiscUS.png", TEXFMT_RGBA5551);
+                    self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                    break;
+                case REGION_EU:
+                    cartTex        = LoadTexture("Data/Game/Models/DiscEU.png", TEXFMT_RGBA5551);
+                    self->meshCart = LoadMesh("Data/Game/Models/MegaCDMedia.bin", cartTex);
+                    break;
+            }
+        }
+        else {
+            switch (Engine.globalBoxRegion) {
+                case REGION_JP:
+                    cartTex        = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
+                    self->meshCart = LoadMesh("Data/Game/Models/JPCartridge.bin", cartTex);
+                    break;
+                case REGION_US:
+                    cartTex        = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
+                    self->meshCart = LoadMesh("Data/Game/Models/Cartridge.bin", cartTex);
+                    break;
+                case REGION_EU:
+                    cartTex        = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
+                    self->meshCart = LoadMesh("Data/Game/Models/Cartridge.bin", cartTex);
+                    break;
+            }
+        }
+        self->prevRegion = Engine.globalBoxRegion;
     }
 
     if (self->visible) {
@@ -94,9 +104,7 @@ void StartGameButton_Main(void *objPtr)
         }
         SetRenderBlendMode(RENDER_BLEND_ALPHA);
         SetRenderVertexColor(self->r, self->g, self->b);
-
-        RenderImage(self->x, self->y, self->z, self->scale, self->scale, 256.0, 256.0, 512.0, 512.0, 0.0, 0.0, self->alpha, self->textureCircle);
-
+        RenderImage(self->x, self->y, self->z, self->scale, self->scale, 256.0, 256.0, 512.0, 512.0, 0.0, 0.0, 255, self->textureCircle);
         SetRenderVertexColor(0xFF, 0xFF, 0xFF);
         SetRenderBlendMode(RENDER_BLEND_NONE);
 

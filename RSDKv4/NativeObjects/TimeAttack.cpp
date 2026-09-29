@@ -21,6 +21,13 @@ void TimeAttack_Create(void *objPtr)
         // GHZ-SBZ + FZ
         actCount = (timeAttack_ZoneCount * timeAttack_ActCount) + 1;
     }
+    else if (Engine.gameType == GAME_SONICCD) {
+        timeAttack_ZoneCount   = 6;
+        timeAttack_ActCount    = 3;
+        timeAttack_ExZoneCount = 2;
+        // PPZ-SSZ + Metallic Madness (final zone, 3 acts instead of 1)
+        actCount = (timeAttack_ZoneCount * timeAttack_ActCount) + 3;
+    }
     else {
         timeAttack_ZoneCount = 11;
 #if !RETRO_USE_ORIGINAL_CODE
@@ -57,11 +64,11 @@ void TimeAttack_Create(void *objPtr)
         }
     }
 
-    // Special Stages (S1 Only)
-    if (Engine.gameType == GAME_SONIC1) {
+    // Special Stages (S1 / SCD Only)
+    if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
         int offset            = actCount * 3;
 
-        int specialStageCount = 6;
+        int specialStageCount = (Engine.gameType == GAME_SONICCD) ? 8 : 6;
         for (int i = 0; i < specialStageCount * 3; i += 3) {
             // 1st
             if (!saveGame->records[offset + i]) {
@@ -95,8 +102,8 @@ void TimeAttack_Create(void *objPtr)
         SetStringToFont(zoneButton->zoneText, strStageList[z], FONT_TEXT);
 
         self->totalTime = 0;
-        if (Engine.gameType == GAME_SONIC1) {
-            // Regular Stages (GHZ-SBZ)
+        if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
+            // Regular Stages (GHZ-SBZ / PPZ-SSZ)
             for (int a = 0; a < timeAttack_ActCount; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
             pos += timeAttack_ActCount;
         }
@@ -124,7 +131,10 @@ void TimeAttack_Create(void *objPtr)
             x += 144.0;
     }
 
-    if (Engine.gameType == GAME_SONIC1) {
+    if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
+        int finalZoneActs     = (Engine.gameType == GAME_SONICCD) ? 3 : 1;
+        int specialStageCount = (Engine.gameType == GAME_SONICCD) ? 8 : 6;
+
         // final zone
         int z                               = 6;
         NativeEntity_ZoneButton *zoneButton = CREATE_ENTITY(ZoneButton);
@@ -133,8 +143,8 @@ void TimeAttack_Create(void *objPtr)
         SetStringToFont(zoneButton->zoneText, strStageList[z], FONT_TEXT);
 
         self->totalTime = 0;
-        self->totalTime += saveGame->records[3 * pos];
-        pos++;
+        for (int a = 0; a < finalZoneActs; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
+        pos += finalZoneActs;
         SetStringToFont8(self->zoneButtons[z]->timeText, "", FONT_TEXT);
         AddTimeStringToFont(self->zoneButtons[z]->timeText, self->totalTime, FONT_TEXT);
         self->zoneButtons[z]->textWidth = GetTextWidth(self->zoneButtons[z]->zoneText, FONT_TEXT, 0.25) * 0.5;
@@ -145,15 +155,15 @@ void TimeAttack_Create(void *objPtr)
             x += 144.0;
 
         // special stages
-        z                = 7;
+        z                    = 7;
         zoneButton           = CREATE_ENTITY(ZoneButton);
         self->zoneButtons[z] = zoneButton;
         zoneButton->x        = x;
         SetStringToFont(zoneButton->zoneText, strStageList[z], FONT_TEXT);
 
         self->totalTime = 0;
-        for (int a = 0; a < 6; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
-        pos += 6;
+        for (int a = 0; a < specialStageCount; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
+        pos += specialStageCount;
         SetStringToFont8(self->zoneButtons[z]->timeText, "", FONT_TEXT);
         AddTimeStringToFont(self->zoneButtons[z]->timeText, self->totalTime, FONT_TEXT);
         self->zoneButtons[z]->textWidth = GetTextWidth(self->zoneButtons[z]->zoneText, FONT_TEXT, 0.25) * 0.5;
@@ -162,8 +172,8 @@ void TimeAttack_Create(void *objPtr)
     self->totalTime = 0;
     pos             = 0;
     for (int z = 0; z < timeAttack_ZoneCount; ++z) {
-        if (Engine.gameType == GAME_SONIC1) {
-            // Regular Stages (GHZ-SBZ)
+        if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
+            // Regular Stages (GHZ-SBZ / PPZ-SSZ)
             for (int a = 0; a < timeAttack_ActCount; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
             pos += timeAttack_ActCount;
         }
@@ -183,22 +193,25 @@ void TimeAttack_Create(void *objPtr)
         }
     }
 
-    if (Engine.gameType == GAME_SONIC1) {
+    if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
+        int finalZoneActs     = (Engine.gameType == GAME_SONICCD) ? 3 : 1;
+        int specialStageCount = (Engine.gameType == GAME_SONICCD) ? 8 : 6;
+
         // final zone
-        self->totalTime += saveGame->records[3 * pos];
-        pos++;
+        for (int a = 0; a < finalZoneActs; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
+        pos += finalZoneActs;
 
         // special stages
-        for (int a = 0; a < 6; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
-        pos += 6;
+        for (int a = 0; a < specialStageCount; ++a) self->totalTime += saveGame->records[3 * (pos + a)];
+        pos += specialStageCount;
     }
 
-    int zone = saveRAM[SAVE_UNLOCKEDACTS];
+    int zone = saveGame->unlockedActs;
     for (int i = 0; i < 4; ++i) {
         if (saveGame->files[i].stageID > zone)
             zone = saveGame->files[i].stageID;
     }
-    saveRAM[SAVE_UNLOCKEDACTS] = zone;
+    saveGame->unlockedActs = zone;
 
     float tx = 480.0f;
     float ty = 120.0f;
@@ -212,7 +225,7 @@ void TimeAttack_Create(void *objPtr)
             }
         }
 
-        if (Engine.gameType == GAME_SONIC1) {
+        if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
             if (i == 5) { // this sucks (final zone hack)
                 tx += 320.0f;
                 tx += 320.0f;
@@ -254,12 +267,14 @@ void TimeAttack_Create(void *objPtr)
                 if (i == 11) // Boss Attack
                     self->zoneButtons[i]->unlocked = self->zoneButtons[i - 1]->unlocked;
                 if (i == 10) // HPZ
-                    self->zoneButtons[i]->unlocked = saveRAM[SAVE_UNLOCKEDHPZ];
+                    self->zoneButtons[i]->unlocked = saveGame->unlockedHPZ;
             }
         }
     }
 
-    if (Engine.gameType == GAME_SONIC1) {
+    if (Engine.gameType == GAME_SONIC1 || Engine.gameType == GAME_SONICCD) {
+        int finalZoneActs = (Engine.gameType == GAME_SONICCD) ? 3 : 1;
+
         // final zone
         self->zoneButtons[6]->unlocked = false;
         if (zone > timeAttack_ActCount * 6) { // if listPos == final zone OR complete
@@ -272,7 +287,7 @@ void TimeAttack_Create(void *objPtr)
         self->zoneButtons[7]->texX     = tx;
         self->zoneButtons[7]->texY     = ty;
         self->zoneButtons[7]->unlocked = false;
-        if (zone > (timeAttack_ActCount * 6) + 1) { // if listPos == complete
+        if (zone > (timeAttack_ActCount * 6) + finalZoneActs) { // if listPos == complete
             if (zone < 0x80){
                 self->zoneButtons[7]->unlocked = true;
             }

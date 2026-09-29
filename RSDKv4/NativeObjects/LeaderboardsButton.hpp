@@ -19,9 +19,6 @@ struct NativeEntity_LeaderboardsButton : NativeEntityBase {
     MatrixF renderMatrix;
     MatrixF matrixTemp;
     NativeEntity_TextLabel *labelPtr;
-
-    int alpha;
-
 };
 
 void LeaderboardsButton_Create(void *objPtr);

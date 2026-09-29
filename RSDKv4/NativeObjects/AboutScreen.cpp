@@ -26,21 +26,38 @@ void AboutScreen_Create(void *objPtr)
     SetMeshVertexColors(self->meshPanel, 0, 0, 0, 0xC0);
     self->textureArrows = LoadTexture("Data/Game/Menu/ArrowButtons.png", TEXFMT_RGBA4444);
 
-    int package = 0;
-    switch (Engine.globalBoxRegion) {
-        case REGION_JP:
-            package       = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
-            self->meshBox = LoadMesh("Data/Game/Models/JPBox.bin", package);
-            break;
-        case REGION_US:
-            package       = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
-            self->meshBox = LoadMesh("Data/Game/Models/Box.bin", package);
-            break;
-        case REGION_EU:
-            package       = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
-            self->meshBox = LoadMesh("Data/Game/Models/Box.bin", package);
-            break;
-        default: break;
+    int boxTex = 0;
+    if (Engine.gameType == GAME_SONICCD) {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                boxTex        = LoadTexture("Data/Game/Models/JPBox.png", TEXFMT_RGBA5551);
+                self->meshBox = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+            case REGION_US:
+                boxTex        = LoadTexture("Data/Game/Models/USBox.png", TEXFMT_RGBA5551);
+                self->meshBox = LoadMesh("Data/Game/Models/USBox.bin", boxTex);
+                break;
+            case REGION_EU:
+                boxTex        = LoadTexture("Data/Game/Models/EUBox.png", TEXFMT_RGBA5551);
+                self->meshBox = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+        }
+    }
+    else {
+        switch (Engine.globalBoxRegion) {
+            case REGION_JP:
+                boxTex        = LoadTexture("Data/Game/Models/Package_JP.png", TEXFMT_RGBA5551);
+                self->meshBox = LoadMesh("Data/Game/Models/JPBox.bin", boxTex);
+                break;
+            case REGION_US:
+                boxTex        = LoadTexture("Data/Game/Models/Package_US.png", TEXFMT_RGBA5551);
+                self->meshBox = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+            case REGION_EU:
+                boxTex        = LoadTexture("Data/Game/Models/Package_EU.png", TEXFMT_RGBA5551);
+                self->meshBox = LoadMesh("Data/Game/Models/Box.bin", boxTex);
+                break;
+        }
     }
 
     SetMeshAnimation(self->meshBox, &self->animator, 16, 16, 0.0);

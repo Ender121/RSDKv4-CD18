@@ -3,7 +3,6 @@
 void SegaSplash_Create(void *objPtr)
 {
     RSDK_THIS(SegaSplash);
-
     self->state     = SEGAPLASH_STATE_ENTER;
     self->rectAlpha = 320.0;
     self->textureID = LoadTexture("Data/Game/Menu/CWLogo.png", TEXFMT_RGBA8888);
