@@ -7,47 +7,17 @@ void VirtualDPad_Create(void *objPtr)
 
     float screenXCenter = SCREEN_CENTERX;
     float screenYCenter = SCREEN_CENTERY;
-
-    if (Engine.gameType != GAME_SONICCD){
-        self->moveX         = saveRAM[SAVE_VDPADX_MOVE] - screenXCenter;
-    }
-    else {
-        self->moveX         = saveGame->vDPad_CD - screenXCenter;
-    }
-
-    if (Engine.gameType != GAME_SONICCD){
-        self->moveY         = -(saveRAM[SAVE_VDPADY_MOVE] - screenYCenter);
-    }
-    else {
-        self->moveY         = -(saveGame->vDPad_CD - screenYCenter);
-    }
-
-    if (Engine.gameType != GAME_SONICCD){
-        self->jumpX         = saveRAM[SAVE_VDPADX_JUMP] + screenXCenter;
-    }
-    else {
-        self->jumpX         = saveGame->vDPad_CD + screenXCenter;
-    }
-
+    self->moveX         = saveGame->vDPadX_Move - screenXCenter;
+    self->moveY         = -(saveGame->vDPadY_Move - screenYCenter);
+    self->jumpX         = saveGame->vDPadX_Jump + screenXCenter;
     self->pauseY        = 104.0f;
-
-    if (Engine.gameType != GAME_SONICCD){
-        self->jumpY         = -(saveRAM[SAVE_VDPADY_JUMP] - screenYCenter);
-    }
-    else {
-        self->jumpY         = -(saveGame->vDPad_CD - screenYCenter);
-    }
-
+    self->jumpY         = -(saveGame->vDPadY_Jump - screenYCenter);
     self->pauseX        = screenXCenter - 76.0f;
     self->pauseX_S      = screenXCenter - 52.0f;
     self->moveFinger    = -1;
     self->jumpFinger    = -1;
 
-    float dpadSize            = saveRAM[SAVE_VDPADSIZE]* (1 / 256.0f);
-    if (Engine.gameType == GAME_SONICCD){
-        dpadSize = saveGame->vDPad_CD * (1 / 256.0f);
-    }
-
+    float dpadSize            = saveGame->vDPadSize * (1 / 256.0f);
     self->moveSize            = dpadSize;
     self->jumpSize            = dpadSize;
     self->pressedSize         = dpadSize * 0.85;
@@ -62,17 +32,17 @@ void VirtualDPad_Main(void *objPtr)
     SaveGame *saveGame = (SaveGame *)saveRAM;
 
     if (globalVariables[self->useTouchControls] && (!globalVariables[self->usePhysicalControls] || self->editMode)) {
-        if (self->alpha < saveRAM[SAVE_VDPADOPACITY]) {
+        if (self->alpha < saveGame->vDPadOpacity) {
             self->alpha += 4;
             if (self->pauseAlpha < 0xFF) {
-                self->pauseAlpha = (self->alpha << 8) / saveRAM[SAVE_VDPADOPACITY];
+                self->pauseAlpha = (self->alpha << 8) / saveGame->vDPadOpacity;
             }
         }
     }
     else {
         if (self->alpha > 0) {
             self->alpha -= 4;
-            self->pauseAlpha = (self->alpha << 8) / saveRAM[SAVE_VDPADOPACITY];
+            self->pauseAlpha = (self->alpha << 8) / saveGame->vDPadOpacity;
         }
     }
 
@@ -81,7 +51,7 @@ void VirtualDPad_Main(void *objPtr)
         RenderImage(self->moveX, self->moveY, 160.0, self->moveSize, self->moveSize, 128.0, 128.0, 256.0, 256.0, 0.0, 0.0, self->alpha,
                     self->textureID);
 
-        if (self->alpha != saveRAM[SAVE_VDPADOPACITY]) {
+        if (self->alpha != saveGame->vDPadOpacity) {
             self->offsetX = 0.0;
             self->offsetY = 0.0;
         }
@@ -126,7 +96,7 @@ void VirtualDPad_Main(void *objPtr)
                     self->textureID);
 
         float size = 0.0f;
-        if (self->alpha == saveRAM[SAVE_VDPADOPACITY] && (keyDown.C || keyDown.A || keyDown.B))
+        if (self->alpha == saveGame->vDPadOpacity && (keyDown.C || keyDown.A || keyDown.B))
             size = self->pressedSize;
         else
             size = self->jumpSize;
