@@ -27,12 +27,7 @@ void MenuControl_Create(void *objPtr)
         self->buttonCount++;
     }
 
-#if !RETRO_USE_ORIGINAL_CODE
-    // Sonic CD ships with onlineActive disabled, but we still want Achievements and Leaderboards to show up in the menu
-    if (Engine.onlineActive || Engine.gameType == GAME_SONICCD) {
-#else
     if (Engine.onlineActive) {
-#endif
         self->buttons[self->buttonCount]     = CREATE_ENTITY(AchievementsButton);
         self->buttonFlags[self->buttonCount] = BUTTON_ACHIEVEMENTS;
         self->buttonCount++;
